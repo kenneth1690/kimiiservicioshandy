@@ -39,7 +39,6 @@ class _ConfirmBookingDialogState extends State<ConfirmBookingDialog> {
   List<int> selectedService = [];
 
   bool isSelected = false;
-  String serviceId = "";
 
   Future<void> bookServices() async {
     if (widget.selectedPackage != null) {
@@ -47,14 +46,6 @@ class _ConfirmBookingDialogState extends State<ConfirmBookingDialog> {
         widget.selectedPackage!.serviceList!.forEach((element) {
           selectedService.add(element.id.validate());
         });
-
-        for (var i in selectedService) {
-          if (i == selectedService.last) {
-            serviceId = serviceId + i.toString();
-          } else {
-            serviceId = serviceId + i.toString() + ",";
-          }
-        }
       }
 
       selectedPackage = {
@@ -62,7 +53,7 @@ class _ConfirmBookingDialogState extends State<ConfirmBookingDialog> {
         PackageKey.categoryId: widget.selectedPackage!.categoryId != -1 ? widget.selectedPackage!.categoryId.validate() : null,
         PackageKey.name: widget.selectedPackage!.name.validate(),
         PackageKey.price: widget.selectedPackage!.price.validate(),
-        PackageKey.serviceId: serviceId,
+        PackageKey.serviceId: selectedService.join(','),
         PackageKey.startDate: widget.selectedPackage!.startDate.validate(),
         PackageKey.endDate: widget.selectedPackage!.endDate.validate(),
         PackageKey.isFeatured: widget.selectedPackage!.isFeatured == 1 ? '1' : '0',
@@ -81,9 +72,10 @@ class _ConfirmBookingDialogState extends State<ConfirmBookingDialog> {
       CommonKeys.address: widget.data.serviceDetail!.address.validate().toString(),
       CommonKeys.date: widget.data.serviceDetail!.isSlotAvailable ? widget.data.serviceDetail!.bookingDate.validate().toString() : widget.data.serviceDetail!.dateTimeVal.validate().toString(),
       BookingServiceKeys.couponId: widget.couponCode.validate(),
-      BookService.amount: widget.data.serviceDetail!.price,
+      BookService.amount: widget.selectedPackage != null ? widget.selectedPackage!.price : widget.data.serviceDetail!.price,
       BookService.quantity: '${widget.qty}',
-      BookingServiceKeys.totalAmount: widget.bookingPrice.validate().toStringAsFixed(getIntAsync(PRICE_DECIMAL_POINTS)),
+      BookingServiceKeys.totalAmount: !widget.data.serviceDetail!.isFreeService
+          ? widget.bookingPrice.validate().toStringAsFixed(getIntAsync(PRICE_DECIMAL_POINTS)) : 0,
       CouponKeys.discount: widget.data.serviceDetail!.discount != null ? widget.data.serviceDetail!.discount.toString() : "",
       BookService.bookingAddressId: widget.data.serviceDetail!.bookingAddressId != -1 ? widget.data.serviceDetail!.bookingAddressId : null,
       BookingServiceKeys.type: BOOKING_TYPE_SERVICE,
@@ -100,7 +92,7 @@ class _ConfirmBookingDialogState extends State<ConfirmBookingDialog> {
       request.putIfAbsent('booking_day', () => widget.data.serviceDetail!.bookingDay.validate().toString());
     }
 
-    if (widget.data.taxes.validate().isNotEmpty) {
+    if (!widget.data.serviceDetail!.isFreeService && widget.data.taxes.validate().isNotEmpty) {
       request.putIfAbsent('tax', () => widget.data.taxes);
     }
     if (widget.data.serviceDetail != null && widget.data.serviceDetail!.isAdvancePayment) {
@@ -119,6 +111,7 @@ class _ConfirmBookingDialogState extends State<ConfirmBookingDialog> {
         finish(context);
         showInDialog(
           context,
+          barrierDismissible: false,
           builder: (BuildContext context) => BookingConfirmationDialog(
             data: widget.data,
             bookingId: bookingDetailResponse.bookingDetail!.id,

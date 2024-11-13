@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lottie/lottie.dart' as lottie;
 import 'package:nb_utils/nb_utils.dart';
-
 import '../../component/base_scaffold_widget.dart';
 import '../../main.dart';
 import '../../model/update_location_response.dart';
@@ -24,9 +22,8 @@ class TrackLocation extends StatefulWidget {
   State<TrackLocation> createState() => _TrackLocationState();
 }
 
-class _TrackLocationState extends State<TrackLocation> {
+class _TrackLocationState extends State<TrackLocation> with WidgetsBindingObserver{
   gmaps.CameraPosition _initialLocation = gmaps.CameraPosition(target: gmaps.LatLng(0.0, 0.0));
-
   UpdateLocationResponse? providerLocation;
   gmaps.GoogleMapController? mapController;
   Set<gmaps.Marker> _markers = {};
@@ -42,28 +39,21 @@ class _TrackLocationState extends State<TrackLocation> {
   void initState() {
     super.initState();
     allLocation();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   allLocation()async{
-      setState(() {
-        isLoading = true;
-      });
    await  _loadCustomIcon();
-   await setLocationfun();
+   await setLocationfuns();
     _startLocationUpdates();
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _locationSubscription?.cancel();
-    mapController?.dispose();
-    super.dispose();
-  }
 
+
+  //region Methods
   void _startLocationUpdates() {
     _locationSubscription = Stream.periodic(Duration(seconds: 30))
-        .asyncMap((_) => setLocationfun())
+        .asyncMap((_) => setLocationfuns())
         .listen((location) async {
       setState((){
       providerLocation =  location;
@@ -75,16 +65,13 @@ class _TrackLocationState extends State<TrackLocation> {
     });
   }
 
-  Future<UpdateLocationResponse> setLocationfun() async {
-    return setLocationfuns();
-  }
 
   Future<UpdateLocationResponse> setLocationfuns() async {
     setState(() {
       isLoading = true;
     });
     try {
-      var value = await getLocation(widget.bookingId.toString());
+      var value = await getProviderLocation(widget.bookingId);
       setState((){
       providerLocation =  value;
       });
@@ -179,6 +166,34 @@ class _TrackLocationState extends State<TrackLocation> {
     ));
   }
 
+
+  void stopProviderLocation(){
+    _timer?.cancel();
+    _locationSubscription?.cancel();
+    mapController?.dispose();
+  }
+  //endregion
+
+  //region Closing
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      stopProviderLocation();
+    } else if (state == AppLifecycleState.resumed) {
+      setLocationfuns();
+      _startLocationUpdates();
+    }
+  }
+
+  @override
+  void dispose() {
+    stopProviderLocation();
+    super.dispose();
+  }
+
+  //endregion closing
+
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -190,13 +205,18 @@ class _TrackLocationState extends State<TrackLocation> {
             zoomGesturesEnabled: true,
             zoomControlsEnabled: true,
             markers: _markers,
-            initialCameraPosition: CameraPosition(
-            target:  gmaps.LatLng(
-            double.parse(providerLocation?.data.latitude.toString() ?? "0.0"),
-            double.parse(providerLocation?.data.longitude.toString() ?? "0.0"),
-          ),
-            zoom: 14.0,
-          ),
+            initialCameraPosition: _initialLocation,
+            gestureRecognizers: Set()
+              ..add(Factory<OneSequenceGestureRecognizer>(
+                      () => new EagerGestureRecognizer()))
+              ..add(Factory<PanGestureRecognizer>(
+                      () => PanGestureRecognizer()))
+              ..add(Factory<ScaleGestureRecognizer>(
+                      () => ScaleGestureRecognizer()))
+              ..add(Factory<TapGestureRecognizer>(
+                      () => TapGestureRecognizer()))
+              ..add(Factory<VerticalDragGestureRecognizer>(
+                      () => VerticalDragGestureRecognizer())),
             onMapCreated: (controller) => mapController = controller,
           ),
           Positioned(

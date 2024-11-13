@@ -1,8 +1,9 @@
 class FirebaseDetailsModel {
   FirebaseDetailsModel({
-      this.status, 
-      this.data, 
-      this.message,});
+    this.status,
+    this.data,
+    this.message,
+  });
 
   FirebaseDetailsModel.fromJson(dynamic json) {
     status = json['status'];
@@ -12,13 +13,16 @@ class FirebaseDetailsModel {
   bool? status;
   Data? data;
   String? message;
-FirebaseDetailsModel copyWith({  bool? status,
-  Data? data,
-  String? message,
-}) => FirebaseDetailsModel(  status: status ?? this.status,
-  data: data ?? this.data,
-  message: message ?? this.message,
-);
+  FirebaseDetailsModel copyWith({
+    bool? status,
+    Data? data,
+    String? message,
+  }) =>
+      FirebaseDetailsModel(
+        status: status ?? this.status,
+        data: data ?? this.data,
+        message: message ?? this.message,
+      );
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     map['status'] = status;
@@ -28,30 +32,32 @@ FirebaseDetailsModel copyWith({  bool? status,
     map['message'] = message;
     return map;
   }
-
 }
 
 class Data {
   Data({
-      this.projectName, 
-      this.firebaseToken,});
+    this.projectId,
+    this.firebaseToken,
+  });
 
   Data.fromJson(dynamic json) {
-    projectName = json['project_name'];
+    projectId = json['project_id'];
     firebaseToken = json['firebase_token'];
   }
-  String? projectName;
+  String? projectId;
   String? firebaseToken;
-Data copyWith({  String? projectName,
-  String? firebaseToken,
-}) => Data(  projectName: projectName ?? this.projectName,
-  firebaseToken: firebaseToken ?? this.firebaseToken,
-);
+  Data copyWith({
+    String? projectId,
+    String? firebaseToken,
+  }) =>
+      Data(
+        projectId: projectId ?? this.projectId,
+        firebaseToken: firebaseToken ?? this.firebaseToken,
+      );
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
-    map['project_name'] = projectName;
+    map['project_id'] = projectId;
     map['firebase_token'] = firebaseToken;
     return map;
   }
-
 }

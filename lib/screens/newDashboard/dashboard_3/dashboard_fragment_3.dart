@@ -36,7 +36,11 @@ class _DashboardFragment3State extends State<DashboardFragment3> {
     init();
 
     afterBuildCreated(() {
-      setStatusBarColor(transparentColor, delayInMilliSeconds: 800, statusBarIconBrightness: appStore.isDarkMode ? Brightness.light : Brightness.dark);
+      setStatusBarColor(
+        transparentColor,
+        delayInMilliSeconds: 800,
+        statusBarIconBrightness: appStore.isDarkMode ? Brightness.light : Brightness.dark,
+      );
     });
 
     LiveStream().on(LIVESTREAM_UPDATE_DASHBOARD, (p0) {

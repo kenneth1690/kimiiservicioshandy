@@ -29,7 +29,7 @@ class _DashboardFragment1State extends State<DashboardFragment1> {
     super.initState();
     init();
 
-    setStatusBarColor(transparentColor, delayInMilliSeconds: 800);
+    setStatusBarColorChange();
 
     LiveStream().on(LIVESTREAM_UPDATE_DASHBOARD, (p0) {
       init();
@@ -41,6 +41,20 @@ class _DashboardFragment1State extends State<DashboardFragment1> {
 
   void init() async {
     future = userDashboard(isCurrentLocation: appStore.isCurrentLocation, lat: getDoubleAsync(LATITUDE), long: getDoubleAsync(LONGITUDE));
+    setStatusBarColorChange();
+    setState(() {});
+  }
+
+  Future<void> setStatusBarColorChange() async {
+    setStatusBarColor(
+      statusBarIconBrightness: appStore.isDarkMode
+          ? Brightness.light
+          : await isNetworkAvailable()
+              ? Brightness.light
+              : Brightness.dark,
+      transparentColor,
+      delayInMilliSeconds: 800,
+    );
   }
 
   @override

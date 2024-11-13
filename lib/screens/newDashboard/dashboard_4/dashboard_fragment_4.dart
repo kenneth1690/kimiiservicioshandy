@@ -3,6 +3,7 @@ import 'package:booking_system_flutter/screens/newDashboard/dashboard_4/componen
 import 'package:booking_system_flutter/screens/newDashboard/dashboard_4/component/upcoming_booking_dashboard_component_4.dart';
 import 'package:booking_system_flutter/screens/newDashboard/dashboard_4/shimmer/dashboard_shimmer_4.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:nb_utils/nb_utils.dart';
 
@@ -30,7 +31,7 @@ class _DashboardFragment4State extends State<DashboardFragment4> {
     super.initState();
     init();
 
-    setStatusBarColor(transparentColor, delayInMilliSeconds: 800);
+    setStatusBarColorChange();
 
     LiveStream().on(LIVESTREAM_UPDATE_DASHBOARD, (p0) {
       init();
@@ -42,6 +43,20 @@ class _DashboardFragment4State extends State<DashboardFragment4> {
 
   void init() async {
     future = userDashboard(isCurrentLocation: appStore.isCurrentLocation, lat: getDoubleAsync(LATITUDE), long: getDoubleAsync(LONGITUDE));
+    setStatusBarColorChange();
+    setState(() {});
+  }
+
+  Future<void> setStatusBarColorChange() async {
+    setStatusBarColor(
+      statusBarIconBrightness: appStore.isDarkMode
+          ? Brightness.light
+          : await isNetworkAvailable()
+              ? Brightness.light
+              : Brightness.dark,
+      transparentColor,
+      delayInMilliSeconds: 800,
+    );
   }
 
   @override

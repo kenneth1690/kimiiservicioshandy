@@ -84,7 +84,7 @@ class BookingDetailHandymanWidgetState extends State<BookingDetailHandymanWidget
           8.height,
           Row(
             children: [
-              if (widget.handymanData.contactNumber.validate().isNotEmpty)
+              if (widget.handymanData.contactNumber.validate().isNotEmpty && widget.bookingDetail.canCustomerContact)
                 AppButton(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -100,8 +100,7 @@ class BookingDetailHandymanWidgetState extends State<BookingDetailHandymanWidget
                   onTap: () {
                     launchCall(widget.handymanData.contactNumber.validate());
                   },
-                ).expand(),
-              16.width,
+                ).paddingRight(16).expand(),
               AppButton(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -141,7 +140,7 @@ class BookingDetailHandymanWidgetState extends State<BookingDetailHandymanWidget
                   }
                   launchUrl(Uri.parse('${getSocialMediaLink(LinkProvider.WHATSAPP)}$phoneNumber'), mode: LaunchMode.externalApplication);
                 },
-              ),
+              ).visible(widget.handymanData.contactNumber.validate().isNotEmpty && widget.bookingDetail.canCustomerContact),
             ],
           ),
           8.height,

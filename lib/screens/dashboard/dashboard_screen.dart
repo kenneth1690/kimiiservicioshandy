@@ -14,6 +14,7 @@ import 'package:booking_system_flutter/utils/string_extensions.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:nb_utils/nb_utils.dart';
 
@@ -36,6 +37,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int currentIndex = 0;
+  bool isInterNetConnect = true;
 
   @override
   void initState() {

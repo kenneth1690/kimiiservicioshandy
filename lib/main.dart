@@ -122,6 +122,9 @@ void main() async {
     appStore.setDarkMode(true);
   }
 
+  defaultToastBackgroundColor = appStore.isDarkMode ? Colors.white : Colors.black;
+  defaultToastTextColor = appStore.isDarkMode ? Colors.black : Colors.white;
+
   runApp(MyApp());
 }
 

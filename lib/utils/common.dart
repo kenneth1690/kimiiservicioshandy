@@ -355,14 +355,21 @@ Future<List<File>> pickFiles({
     FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(
       type: type,
       allowMultiple: allowMultiple,
-      withData: true,
+      withData: Platform.isAndroid ? false : true,
       allowedExtensions: allowedExtensions,
       onFileLoading: (FilePickerStatus status) => print(status),
     );
     if (filePickerResult != null) {
       if (Platform.isAndroid) {
-        // For Android, just use the PlatformFile directly
-        _filePath = filePickerResult.paths.map((path) => File(path!)).toList();
+        // For Android, check file size and use the PlatformFile directly
+        for (PlatformFile file in filePickerResult.files) {
+          if (file.size <= maxFileSizeMB * 1024 * 1024) {
+            _filePath.add(File(file.path!));
+          } else {
+            // File size exceeds the limit
+            toast('File size should be less than $maxFileSizeMB MB');
+          }
+        }
       } else {
         Directory cacheDir = await getTemporaryDirectory();
         for (PlatformFile file in filePickerResult.files) {
@@ -519,6 +526,7 @@ bool checkTimeDifference({required DateTime inputDateTime}) {
   Duration difference = currentTime.difference(inputDateTime).abs();
   return difference.inHours >= 1;
 }
+
 String bankAccountWidget(String accountNo) {
   if (accountNo.length <= 4) {
     return accountNo;
@@ -531,13 +539,9 @@ String bankAccountWidget(String accountNo) {
 Widget mobileNumberInfoWidget(BuildContext context) {
   return RichTextWidget(
     list: [
-      TextSpan(
-          // text: '${language.lblAddYourCountryCode}',
-           text: '${language.addYourCountryCode}',
-          style: secondaryTextStyle()),
+      TextSpan(text: '${language.addYourCountryCode}', style: secondaryTextStyle()),
       TextSpan(text: ' "91-", "236-" ', style: boldTextStyle(size: 12)),
       TextSpan(
-        // text: ' (${language.lblHelp})',
         text: ' (${language.help})',
         style: boldTextStyle(size: 12, color: primaryColor),
         recognizer: TapGestureRecognizer()
@@ -551,6 +555,7 @@ Widget mobileNumberInfoWidget(BuildContext context) {
 
 class OptionListWidget extends StatelessWidget {
   final List<OptionModel> optionList;
+
   const OptionListWidget({super.key, required this.optionList});
 
   @override
@@ -585,9 +590,9 @@ class OptionListWidget extends StatelessWidget {
 class OptionModel {
   final String title;
   final Function()? onTap;
+
   OptionModel({required this.title, required this.onTap});
 }
-
 
 String sumTimes(String time1, String time2) {
   // Parse the time strings into Duration objects
@@ -622,7 +627,15 @@ String _twoDigits(int n) {
   return n.toString().padLeft(2, '0');
 }
 
-void share({required String url}) {
+void share({required String url, required BuildContext context}) {
+  if (Platform.isIOS) {
+    try {
+      final box = context.findRenderObject() as RenderBox?;
+      Share.share(url, subject: "", sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size);
+    } catch (e) {
+      log('Failed to share: $e');
+    }
+  } else {
     Share.share(url);
   }
-
+}

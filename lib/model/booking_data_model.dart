@@ -72,7 +72,11 @@ class BookingData {
   bool get isPackageBooking => bookingPackage != null;
 
   bool get canCustomerContact =>
-      status != BookingStatusKeys.pending && status != BookingStatusKeys.cancelled && status != BookingStatusKeys.failed && status != BookingStatusKeys.rejected && status != BookingStatusKeys.waitingAdvancedPayment;
+      (status == BookingStatusKeys.accept
+          || status == BookingStatusKeys.onGoing
+          || status == BookingStatusKeys.inProgress
+          || status == BookingStatusKeys.hold)
+          || !(paymentStatus == SERVICE_PAYMENT_STATUS_PAID || paymentStatus == PENDING_BY_ADMIN);
 
   bool get isAdvancePaymentDone => paidAmount.validate() != 0;
 

@@ -40,7 +40,6 @@ Future<Response> buildHttpResponse(
 }) async {
   var headers = header ?? buildHeaderTokens();
   Uri url = buildBaseUrl(endPoint);
-
   Response response;
 
   try {
@@ -76,13 +75,8 @@ Future<Response> buildHttpResponse(
     } else {
       return response;
     }
-  } on Exception catch (e) {
-    log('buildHttpResponse: $e');
-    if (!await isNetworkAvailable()) {
-      throw errorInternetNotAvailable;
-    } else {
-      throw errorSomethingWentWrong;
-    }
+  } on Exception {
+    throw errorInternetNotAvailable;
   }
 }
 
@@ -171,31 +165,39 @@ Future<MultipartRequest> getMultiPartRequest(String endPoint, {String? baseUrl})
 }
 
 Future<void> sendMultiPartRequest(MultipartRequest multiPartRequest, {Function(dynamic)? onSuccess, Function(dynamic)? onError}) async {
-  http.Response response = await http.Response.fromStream(await multiPartRequest.send());
-  apiPrint(
-    url: multiPartRequest.url.toString(),
-    headers: jsonEncode(multiPartRequest.headers),
-    request: jsonEncode(multiPartRequest.fields),
-    hasRequest: true,
-    statusCode: response.statusCode,
-    responseBody: response.body,
-    methodtype: "MultiPart",
-  );
+  try {
+    http.Response response = await http.Response.fromStream(await multiPartRequest.send());
+    apiPrint(
+      url: multiPartRequest.url.toString(),
+      headers: jsonEncode(multiPartRequest.headers),
+      request: jsonEncode(multiPartRequest.fields),
+      hasRequest: true,
+      statusCode: response.statusCode,
+      responseBody: response.body,
+      methodtype: "MultiPart",
+    );
 
-  if (response.statusCode.isSuccessful()) {
-    onSuccess?.call(response.body);
-  } else {
-    try {
-      if (response.body.isJson()) {
-        var body = jsonDecode(response.body);
-        onError?.call(body['message'] ?? errorSomethingWentWrong);
-      } else {
+    if (response.statusCode.isSuccessful()) {
+      onSuccess?.call(response.body);
+    } else {
+      try {
+        if (response.body.isJson()) {
+          var body = jsonDecode(response.body);
+          onError?.call(body['message'] ?? errorSomethingWentWrong);
+        } else {
+          onError?.call(errorSomethingWentWrong);
+        }
+      } on Exception catch (e) {
+        log(e);
         onError?.call(errorSomethingWentWrong);
       }
-    } on Exception catch (e) {
-      log(e);
-      onError?.call(errorSomethingWentWrong);
     }
+  } on SocketException catch (e) {
+    log(e.toString());
+    onError?.call(language.internetNotAvailable);
+  } on Exception catch (e) {
+    log(e.toString());
+    onError?.call(errorSomethingWentWrong);
   }
 }
 
@@ -250,6 +252,17 @@ Map<String, String> buildHeaderForAirtelMoney(String accessToken, String XCountr
   header.putIfAbsent(HttpHeaders.authorizationHeader, () => 'Bearer $accessToken');
   header.putIfAbsent('X-Country', () => '$XCountry');
   header.putIfAbsent('X-Currency', () => '$XCurrency');
+
+  return header;
+}
+
+Map<String, String> buildHeaderForAppConfiguration() {
+  Map<String, String> header = defaultHeaders();
+
+  // Check if the user is logged in
+  if (appStore.isLoggedIn) {
+    header.putIfAbsent('user_id', () => appStore.userId.toString()); // if user is logged in pass the user id
+  }
 
   return header;
 }
